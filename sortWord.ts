@@ -1,3 +1,4 @@
+import {add} from './lib/css.js';
 import {amendNode} from './lib/dom.js';
 import {table, tbody, td, th, thead, tr} from './lib/html.js';
 import {NodeArray, node, noSort, stringSort} from './lib/nodes.js';
@@ -17,6 +18,15 @@ const split = data.map(l => l.split(" ")),
 	]),
 	words
       })));
+
+add("#sortWords th", {
+	"cursor": "pointer",
+	"user-select": "none",
+	"padding-right": "1em",
+	".col_selected,:hover": {
+		"text-decoration": "underline"
+	}
+});
 
 export default table({"id": "sortWords"}, [
 	thead(tr(Array.from({"length": maxWords}, (_, n) => th({"title": `Click to sort by word ${n+1}`, "onclick": function(this: HTMLTableCellElement) {
