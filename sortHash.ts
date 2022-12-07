@@ -1,3 +1,4 @@
+import {add} from './lib/css.js';
 import {div, input, table, tbody, td, th, thead, tr} from './lib/html.js';
 import {NodeArray, node, stringSort} from './lib/nodes.js';
 import data from './data.js';
@@ -42,11 +43,15 @@ for (const line of data) {
 	});
 }
 
+add("#sortHash td:first-child", {
+	"font-family": "monospace"
+});
+
 export default div([
 	labels("Sort by Hash: ", input({"type": "checkbox", "onclick": function(this: HTMLInputElement) {
 		rows.sort(this.checked ? sortHash : sortLine);
 	}})),
-	table([
+	table({"id": "sortHash"}, [
 		thead(tr([
 			th(`Hash (${hasSubtle ? "SHA-256" : "Custom Hash"})`),
 			th("Line")
