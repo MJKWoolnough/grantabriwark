@@ -1,4 +1,4 @@
-import {add, render} from './lib/css.js';
+import {at, add, render} from './lib/css.js';
 import {amendNode, clearNode} from './lib/dom.js';
 import {div, li, ul} from './lib/html.js';
 import pageLoad from './lib/load.js';
@@ -95,6 +95,45 @@ pageLoad.then(() => {
 				},
 				":after": {
 					"box-shadow": "-2px 2px 0 #fff"
+				}
+			}
+		}
+	});
+	at("@media (prefers-color-scheme: dark)", {
+		"body": {
+			"background-color": "#000",
+			"color": "#fff",
+		},
+		"ul#tabs": {
+			":after": {
+				"border-color": "#fff"
+			},
+			">li": {
+				"background": "linear-gradient(to bottom, #777 50%, #111 100%)",
+				"box-shadow": "0 3px 3px rgba(255, 255, 255, 0.4), inset 0 1px 0 #000",
+				"text-shadow": "0 1px #000",
+				"border-color": "#fff",
+				":hover": {
+					"background": "linear-gradient(to bottom, #f22 1%, #a77 50%, #111 100%)",
+				},
+				":before,:after": {
+					"border-color": "#fff"
+				},
+				":before": {
+					"box-shadow": "2px 2px 0 #2e2e2e"
+				},
+				":after": {
+					"box-shadow": "-2px 2px 0 #2e2e2e"
+				},
+				".tab_selected": {
+					"border-bottom-color": "#000",
+					"background": "#000 !important",
+					":before": {
+						"box-shadow": "3px 2px 0 #000"
+					},
+					":after": {
+						"box-shadow": "-2px 2px 0 #000"
+					}
 				}
 			}
 		}
