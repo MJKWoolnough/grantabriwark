@@ -21,7 +21,6 @@ const split = data.map(l => l.split(" ")),
 
 add("#sortWords th", {
 	"cursor": "pointer",
-	"user-select": "none",
 	"padding-right": "1em",
 	":hover": {
 		"text-decoration": "underline"

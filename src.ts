@@ -138,5 +138,8 @@ pageLoad.then(() => {
 			}
 		}
 	});
+	add("th", {
+		"user-select": "none"
+	});
 	amendNode(document.head, render());
 });
