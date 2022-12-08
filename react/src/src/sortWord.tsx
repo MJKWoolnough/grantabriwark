@@ -4,7 +4,7 @@ import data from './data';
 const split = data.map((l, id) => ({"words": l.split(" "), id})),
       maxWords = split.reduce((c, w) => Math.max(c, w.words.length), 0),
       stringSort = new Intl.Collator().compare,
-      Row = (params: any) => (<tr>
+      Row = (params: {words: string[]}) => (<tr>
 	{params.words.map((word: string, n: number) => (<td key={n}>{word}</td>))}
 	{Array.from({"length": maxWords - params.words.length}, () => (<td>-</td>))}
       </tr>),
