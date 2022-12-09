@@ -14,7 +14,7 @@ const hasSubtle = !!window.crypto.subtle,
       hashString = hasSubtle ? (str: string) => window.crypto.subtle.digest("SHA-1", new TextEncoder().encode(str)).then(d => {
 	const data = new Uint8Array(d);
 	let str = "";
-        for (const a of data) {
+	for (const a of data) {
 		str += ("0" + a.toString(16)).slice(-2);
 	}
 	return str;
