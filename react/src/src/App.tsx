@@ -11,7 +11,12 @@ const MenuItem = (params: {className: string; onClick: MouseEventHandler<HTMLLIE
 	);
       },
       App = () => {
-	const [selected, setSelected] = useState(-1);
+	const [selected, setSelected] = useState(-1),
+	      start = (<div>Please select a page to start</div>),
+	      checkbox = (<Checkbox />),
+	      radio = (<Radio />),
+	      sortWord = (<SortWord />),
+	      sortHash = (<SortHash />);
 	return (
 		<div>
 			<ul id="tabs">
@@ -20,11 +25,7 @@ const MenuItem = (params: {className: string; onClick: MouseEventHandler<HTMLLIE
 				<MenuItem title="Page 3" className={selected === 2 ? "tab_selected" : ""} onClick={() => setSelected(2)} />
 				<MenuItem title="Page 4" className={selected === 3 ? "tab_selected" : ""} onClick={() => setSelected(3)} />
 			</ul>
-			<div className={selected !== -1 ? "hidden" : ""}>Please select a page to start</div>
-			<Checkbox hidden={selected !== 0} />
-			<Radio hidden={selected !== 1} />
-			<SortWord hidden={selected !== 2} />
-			<SortHash hidden={selected !== 3} />
+			{selected === 0 ? checkbox : selected === 1 ? radio : selected === 2 ? sortWord : selected === 3 ? sortHash : start}
 		</div>
 	);
       };
