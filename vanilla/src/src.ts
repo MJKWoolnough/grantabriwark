@@ -1,7 +1,7 @@
 import checkbox from './checkbox.js';
 import radio from './radio.js';
-import sortWord from './sortWord.js';
 import sortHash from './sortHash.js';
+import sortWord from './sortWord.js';
 
 const content = document.createElement("div"),
       ul = document.createElement("ul");
