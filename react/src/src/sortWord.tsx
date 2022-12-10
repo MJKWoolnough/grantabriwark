@@ -8,11 +8,11 @@ const split = data.map((l, id) => ({"words": l.split(" "), id})),
 	{params.words.map((word: string, n: number) => (<td key={n}>{word}</td>))}
 	{Array.from({"length": maxWords - params.words.length}, () => (<td>-</td>))}
       </tr>),
-      SortWord = (params: {hidden: boolean}) => {
+      SortWord = () => {
 	const [sortNum, setSortNum] = useState(-1),
 	      [reverse, setReverse] = useState(false);
 	return (
-		<table id="sortWords" className={params.hidden ? "hidden" : ""}>
+		<table id="sortWords">
 			<thead>
 				<tr>{Array.from({"length": maxWords}, (_, n) => (<th className={`${sortNum === n ? "col_selected" : ""} ${reverse ? "reverse" : ""}`} key={n} onClick={() => {
 					if (sortNum === n) {

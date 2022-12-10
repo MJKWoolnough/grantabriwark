@@ -8,9 +8,9 @@ const checked = JSON.parse(window.localStorage.getItem("grantabriwark_checked") 
 		<li><input type="checkbox" defaultChecked={params.checked} id={"check_" + id} onClick={() => {checked[params.num] = !checked[params.num]; window.localStorage.setItem("grantabriwark_checked", JSON.stringify(checked))}} /><label htmlFor={"check_" + id}>{params.line}</label></li>
 	);
       },
-      Checkbox = (params: {hidden: boolean}) => {
+      Checkbox = () => {
 	return (
-		<div className={params.hidden ? "hidden" : ""}>
+		<div>
 			Please check the lines you like:
 			<ul id="checkedWords">
 				{data.map((line, n) => (<CheckLine checked={checked[n] ?? false} key={"check_" + n} num={n} line={line} />))}

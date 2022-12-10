@@ -23,11 +23,11 @@ const hasSubtle = !!window.crypto.subtle,
       hashedData: [string, string][] = [],
       stringSort = new Intl.Collator().compare,
       Row = (params: {line: string; hash: string}) => (<tr><td>{params.hash}</td><td>{params.line}</td></tr>),
-      SortHash = (params: {hidden: boolean}) => {
+      SortHash = () => {
 	const [hashSort, setHashSort] = useState(false),
 	      id = useId();
 	return (
-		<div className={params.hidden ? "hidden" : ""}>
+		<div>
 			<label htmlFor={id}>Sort by Hash</label><input type="checkbox" id={id} defaultChecked={hashSort} onClick={() => setHashSort(!hashSort)} />
 			<table id="sortHash">
 				<thead>
