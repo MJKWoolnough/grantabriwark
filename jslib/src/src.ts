@@ -102,7 +102,7 @@ pageLoad.then(() => {
 	at("@media (prefers-color-scheme: dark)", {
 		"body": {
 			"background-color": "#000",
-			"color": "#fff",
+			"color": "#fff"
 		},
 		"ul#tabs": {
 			":after": {
@@ -114,7 +114,7 @@ pageLoad.then(() => {
 				"text-shadow": "0 1px #000",
 				"border-color": "#fff",
 				":hover": {
-					"background": "linear-gradient(to bottom, #f22 1%, #a77 50%, #111 100%)",
+					"background": "linear-gradient(to bottom, #f22 1%, #a77 50%, #111 100%)"
 				},
 				":before,:after": {
 					"border-color": "#fff"
