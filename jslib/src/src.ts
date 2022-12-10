@@ -100,7 +100,7 @@ pageLoad.then(() => {
 		}
 	});
 	at("@media (prefers-color-scheme: dark)", {
-		"body": {
+		"html,body": {
 			"background-color": "#000",
 			"color": "#fff"
 		},
