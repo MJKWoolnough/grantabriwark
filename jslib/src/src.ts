@@ -1,4 +1,4 @@
-import {at, add, render} from './lib/css.js';
+import {add, at, render} from './lib/css.js';
 import {amendNode, clearNode} from './lib/dom.js';
 import {div, li, ul} from './lib/html.js';
 import pageLoad from './lib/load.js';
