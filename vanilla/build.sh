@@ -10,4 +10,5 @@
 	uglifycss style.css | tr -d '\n';
 	echo "</style>";
 	tail -n3 index.html;
-) > index.html
+) > index.html;
+zopfli -m index.html;
