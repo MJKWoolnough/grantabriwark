@@ -9,4 +9,5 @@
 	cat src/build/static/css/main*.css;
 	echo "</style>";
 	tail -n6 src/public/index.html;
-) > index.html
+) > index.html;
+zopfli -m index.html;
