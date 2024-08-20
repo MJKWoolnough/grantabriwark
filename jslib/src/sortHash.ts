@@ -13,18 +13,24 @@ type HashRow = {
 const hasSubtle = !!window.crypto.subtle,
       hashString = hasSubtle ? (str: string) => window.crypto.subtle.digest("SHA-1", new TextEncoder().encode(str)).then(d => {
 	const data = new Uint8Array(d);
+
 	let str = "";
+
 	for (const a of data) {
 		str += ("0" + a.toString(16)).slice(-2);
 	}
+
 	return str;
       }) : (str: string) => {
 	let hash = 0;
+
 	for (let i = 0; i < str.length; i++) {
 		hash = ((hash << 5) - hash) + str.charCodeAt(i);
 		hash |= 0;
 	}
+
 	hash = 0x80000000 + hash;
+
 	return hash.toString(16).padStart(8, "0");
       },
       sortLine = (a: HashRow, b: HashRow) => stringSort(a.line, b.line),
@@ -33,6 +39,7 @@ const hasSubtle = !!window.crypto.subtle,
 
 for (const line of data) {
 	const hash = await hashString(line);
+
 	rows.push({
 		[node]: tr([
 			td(hash),

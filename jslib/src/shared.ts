@@ -12,5 +12,6 @@ interface Labeller {
 
 export const labels = ((name: Children | Input, input: Input | Children, props: PropsObject = {}) => {
 	const iProps = {"id": props["for"] = id()};
+
 	return name instanceof HTMLInputElement || name instanceof HTMLButtonElement || name instanceof HTMLTextAreaElement || name instanceof HTMLSelectElement ? [amendNode(name, iProps), label(props, input)] : [label(props, name), amendNode(input as Input, iProps)];
 }) as Labeller;

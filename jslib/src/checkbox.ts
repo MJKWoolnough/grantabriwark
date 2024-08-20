@@ -15,6 +15,7 @@ export default div([
 	"Please check the lines you like: ",
 	ul({"id": "checkedWords"}, data.map((line, n) => li(labels(input({"type": "checkbox", "checked": checked.value[n], "onchange": function(this: HTMLInputElement) {
 		checked.value[n] = this.checked;
+
 		checked.set(checked.value);
 	}}), line))))
 ]);

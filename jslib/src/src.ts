@@ -9,6 +9,7 @@ import sortWord from './sortWord.js';
 
 pageLoad.then(() => {
 	const content = div("Please select a page to start");
+
 	clearNode(document.body, [
 		ul({"id": "tabs"}, [
 			["Page 1", checkbox],
@@ -22,11 +23,13 @@ pageLoad.then(() => {
 		}}, name))),
 		content
 	]);
+
 	add("html, body", {
 		"background-color": "#fff",
 		"color": "#000",
 		"margin": 0
 	});
+
 	add("#tabs", {
 		"padding-left": 0,
 		"line-height": "24px",
@@ -99,6 +102,7 @@ pageLoad.then(() => {
 			}
 		}
 	});
+
 	at("@media (prefers-color-scheme: dark)", {
 		"html,body": {
 			"background-color": "#000",
@@ -138,8 +142,10 @@ pageLoad.then(() => {
 			}
 		}
 	});
+
 	add("th", {
 		"user-select": "none"
 	});
+
 	amendNode(document.head, render());
 });
