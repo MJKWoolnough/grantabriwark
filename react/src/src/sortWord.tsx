@@ -11,6 +11,7 @@ const split = data.map((l, id) => ({"words": l.split(" "), id})),
       SortWord = () => {
 	const [sortNum, setSortNum] = useState(-1),
 	      [reverse, setReverse] = useState(false);
+
 	return (
 		<table id="sortWords">
 			<thead>

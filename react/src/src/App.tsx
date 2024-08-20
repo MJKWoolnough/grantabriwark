@@ -17,6 +17,7 @@ const MenuItem = (params: {className: string; onClick: MouseEventHandler<HTMLLIE
 	      radio = (<Radio />),
 	      sortWord = (<SortWord />),
 	      sortHash = (<SortHash />);
+
 	return (
 		<div>
 			<ul id="tabs">

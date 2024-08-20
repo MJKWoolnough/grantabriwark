@@ -5,6 +5,7 @@ let radio = JSON.parse(window.localStorage.getItem("grantabriwark_radio") ?? "-1
 
 const RadioLine = (params: {num: number; line: string}) => {
 	const id = useId();
+
 	return (
 		<li><input type="radio" name="grantabriwark_radio" defaultChecked={radio === params.num} id={id} onClick={() => {radio = params.num; window.localStorage.setItem("grantabriwark_radio", radio)}} /><label htmlFor={id}>{params.line}</label></li>
 	);

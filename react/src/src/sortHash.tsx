@@ -4,20 +4,26 @@ import data from './data';
 const hasSubtle = !!window.crypto.subtle,
       hashString = hasSubtle ? (str: string) => window.crypto.subtle.digest("SHA-1", new TextEncoder().encode(str)).then(d => {
 	const data = new Uint8Array(d);
+
 	let str = "";
+
 	for (const a of Array.from(data)) {
 		str += ("0" + a.toString(16)).slice(-2);
 	}
+
 	return str;
       }) : (str: string) => {
 	let hash = 0;
+
 	for (let i = 0; i < str.length; i++) {
 		hash = ((hash << 5) - hash) + str.charCodeAt(i);
 		hash |= 0;
 	}
+
 	if (hash < 0) {
 		hash = 0xFFFFFFF - hash;
 	}
+
 	return hash.toString(16).padStart(8, "0");
       },
       hashedData: [string, string][] = [],
@@ -26,6 +32,7 @@ const hasSubtle = !!window.crypto.subtle,
       SortHash = () => {
 	const [hashSort, setHashSort] = useState(false),
 	      id = useId();
+
 	return (
 		<div>
 			<label htmlFor={id}>Sort by Hash</label><input type="checkbox" id={id} defaultChecked={hashSort} onClick={() => setHashSort(!hashSort)} />
