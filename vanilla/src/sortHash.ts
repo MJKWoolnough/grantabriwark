@@ -3,20 +3,26 @@ import data from './data.js';
 const hasSubtle = !!window.crypto.subtle,
       hashString = hasSubtle ? (str: string) => window.crypto.subtle.digest("SHA-1", new TextEncoder().encode(str)).then(d => {
 	const data = new Uint8Array(d);
+
 	let str = "";
+
 	for (const a of data) {
 		str += ("0" + a.toString(16)).slice(-2);
 	}
+
 	return str;
       }) : (str: string) => {
 	let hash = 0;
+
 	for (let i = 0; i < str.length; i++) {
 		hash = ((hash << 5) - hash) + str.charCodeAt(i);
 		hash |= 0;
 	}
+
 	if (hash < 0) {
 		hash = 0xFFFFFFF - hash;
 	}
+
 	return hash.toString(16).padStart(8, "0");
       },
       stringSort = new Intl.Collator().compare,
@@ -46,6 +52,7 @@ for (const line of data.sort(stringSort)) {
 	const tr = tbody.appendChild(document.createElement("tr")),
 	      hash = tr.appendChild(document.createElement("td")),
 	      l = tr.appendChild(document.createElement("td"));
+
 	hash.textContent = await hashString(line);
 	l.textContent = line;
 }

@@ -11,12 +11,14 @@ for (let i = 0; i < data.length; i++) {
 	      li = ul.appendChild(document.createElement("li")),
 	      input = li.appendChild(document.createElement("input")),
 	      label = li.appendChild(document.createElement("label"));
+
 	input.addEventListener("click", () => window.localStorage.setItem("grantabriwark_radio", n + ""));
 	input.setAttribute("type", "radio");
 	input.toggleAttribute("checked", radio === n);
 	input.setAttribute("name", "grantabriwark_radio");
 	input.setAttribute("id", "radio_" + n);
 	label.setAttribute("for", "radio_" + n);
+
 	label.textContent = data[n];
 }
 
