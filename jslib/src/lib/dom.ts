@@ -1,174 +1,144 @@
+/**
+ * The dom module can be used to manipulate DOM elements.
+ *
+ * @module dom
+ */
+/** */
+
 interface ToString {
 	toString(): string;
 }
 
+/**
+ * This type represents an Object that uses the `attr` symbol to return a special Attr node.
+ **/
+export type BoundAttr = {
+	[attr]: (n: NodeAttributes, k: string) => void;
+}
+
+/**
+ * This type represents an Object that uses the `child` symbol to return a special Element or Text node.
+ **/
+export type BoundChild = {
+	[child]: Element | Text;
+}
+
 interface mElement {
-	<T extends EventTarget>(element: T, properties: Record<`on${string}`, EventListenerObject | EventArray | Function>): T;
-	<T extends Node>(element: T, properties?: Props, children?: Children): T;
-	<T extends Node>(element: T, children?: Children): T;
-	<T extends Node>(element?: T | null, properties?: Props | Children, children?: Children): T;
+	<T extends EventTarget | BoundChild>(element: T, properties: Record<`on${string}`, EventListenerObject | EventArray | Function>): T;
+	<T extends Node | BoundChild>(element: T, properties?: Props, children?: Children): T;
+	<T extends Node | BoundChild>(element: T, children?: Children): T;
+	<T extends Node | BoundChild>(element?: T | null, properties?: Props | Children, children?: Children): T;
 }
 
 type ClassObj = Record<string, boolean | null>;
 
 type StyleObj = Record<string, ToString | undefined> | CSSStyleDeclaration;
 
-type EventArray = [Exclude<EventListenerOrEventListenerObject, Bind> | Bind<EventListenerOrEventListenerObject>, AddEventListenerOptions, boolean];
+/**
+ * This type can be used to set events with {@link amendNode} and {@link clearNode}. The boolean is true if the event is to be removed
+ */
+type EventArray = [EventListenerOrEventListenerObject, AddEventListenerOptions, boolean];
 
-type PropValue = ToString | string[] | DOMTokenList | Function | EventArray | EventListenerObject | StyleObj | ClassObj | undefined;
+/**
+ * This object is used to set attributes and events on a {@link https://developer.mozilla.org/en-US/docs/Web/API/Node | Node) or {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget | EventTarget} with the {@link amendNode} and {@link clearNode} functions.
+ *
+ * The keys of this type refer to the attribute names that are to be set. The key determines what type the value should be:
+ *
+ * |  Key  |  Description  |
+ * |-------|---------------|
+ * | `on*` | Used to set events. Can be a Function, {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener#the_event_listener_callback EventListenerObject}, or {@link EventArray}.|
+ * | `class`, `part` | An array of strings, a {@link https://developer.mozilla.org/en-US/docs/Web/API/DOMTokenList | DOMTokenList}, or an object with string keys and boolean or undefined values, to be used to toggle classes and parts. For the array and DOMTokenList, if a class or part begins with a `!`, the class/part will be removed, if the class or part begins with a `~`, the class/part will be toggled, otherwise the class or part will be set. For the object, a value that equates to true will set the class or part, and a value that equates to false (except nullables, which will toggle the class) will unset the class or part. |
+ * | `style` | A {@link https://developer.mozilla.org/en-US/docs/Web/API/CSSStyleDeclaration | CSSStyleDeclaration} can be used to set the style directly, or an Object can be used to set individual style properties. |
+ * | `*` | For any key, a string or any object with a toString method can be used to set the field explicitly, a number can be used and converted to a string, a boolean can be used to toggle an attribute, and a undefined value can be used to remove an attribute. If a null value is specified, no action will be taken. |
+ */
+export type PropsObject = Record<string, unknown>;
 
-export type PropsObject = Record<string, PropValue>;
-
+/**
+ * This type represents all possible values for the `properties` param of the {@link amendNode} and {@link clearNode} functions.
+ */
 export type Props = PropsObject | NamedNodeMap;
 
-export type Children = string | Node | Children[] | NodeList | HTMLCollection | Binder;
+/**
+ * This type is a string, {@link https://developer.mozilla.org/en-US/docs/Web/API/Node | Node}, {@link https://developer.mozilla.org/en-US/docs/Web/API/NodeList | NodeList}, {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLCollection | HTMLCollection}, {@link Binding}, or a recursive array of those.
+ * */
+export type Children = string | Node | Children[] | NodeList | HTMLCollection | BoundChild;
 
+/** This type represents a binding of either {@link amendNode} or {@link clearNode} with the first param bound. */
 export interface DOMBind<T extends Node> {
 	(properties?: Props, children?: Children): T;
 	(children?: Children): T;
-}
-
-interface FocusElement {
-	focus(): void;
-}
-
-interface TextContent {
-	textContent: string | null;
-}
-
-interface BindFn {
-	<T extends ToString = ToString>(t: T): Bind<T>;
-	(strings: TemplateStringsArray, ...bindings: (Bind | ToString)[]): Binder;
+	[child]: T;
 }
 
 interface NodeAttributes extends Node {
 	readonly classList: DOMTokenList;
+	readonly part: DOMTokenList;
 	readonly style: CSSStyleDeclaration;
-	getAttributeNode(qualifiedName: string): Attr | null;
 	removeAttribute(qualifiedName: string): void;
-	setAttribute(qualifiedName: string, value: string): void;
+	setAttributeNode(attr: Attr): Attr | null;
+	setAttributeNS(ns: null | string, name: string, value: string): void;
 	toggleAttribute(qualifiedName: string, force?: boolean): boolean;
 }
 
 const childrenArr = (children: Children, res: (Node | string)[] = []) => {
-	if (children instanceof Binder) {
-		res.push(children[setNode](new Text(children+"")));
-	} else if (typeof children === "string") {
+	if (isChild(children)) {
+		res.push(children[child]);
+	} else if (typeof children === "string" || children instanceof Node) {
 		res.push(children);
 	} else if (Array.isArray(children)) {
 		for (const c of children) {
 			childrenArr(c, res);
 		}
-	} else if (children instanceof Node) {
-		res.push(children);
 	} else if (children instanceof NodeList || children instanceof HTMLCollection) {
-		for (const c of Array.from(children)) {
-			res.push(c);
-		}
+		res.push(...children);
 	}
+
 	return res;
       },
-      isEventListenerObject = (prop: PropValue): prop is EventListenerObject => prop instanceof Object && (prop as EventListenerObject).handleEvent instanceof Function,
-      isEventListenerOrEventListenerObject = (prop: PropValue): prop is EventListenerOrEventListenerObject => prop instanceof Function || (isEventListenerObject(prop) && !(prop instanceof Bind)) || prop instanceof Bind && isEventListenerOrEventListenerObject(prop.value),
-      isEventObject = (prop: PropValue): prop is (EventArray | EventListenerOrEventListenerObject) => isEventListenerOrEventListenerObject(prop) || (prop instanceof Array && prop.length === 3 && isEventListenerOrEventListenerObject(prop[0]) && prop[1] instanceof Object && typeof prop[2] === "boolean"),
-      isClassObj = (prop: ToString | StyleObj | ClassObj): prop is ClassObj => prop instanceof Object && !(prop instanceof Binder),
-      isStyleObj = (prop: ToString | StyleObj): prop is StyleObj => prop instanceof CSSStyleDeclaration || (prop instanceof Object && !(prop instanceof Binder)),
-      isChildren = (properties: Props | Children): properties is Children => typeof properties === "string" || properties instanceof Array || properties instanceof NodeList || properties instanceof HTMLCollection || properties instanceof Node || properties instanceof Binder,
-      isNodeAttributes = (n: EventTarget): n is NodeAttributes => !!(n as NodeAttributes).style && !!(n as NodeAttributes).classList && !!(n as NodeAttributes).getAttributeNode && !!(n as NodeAttributes).removeAttribute && !!(n as NodeAttributes).setAttribute && !!(n as NodeAttributes).toggleAttribute,
-      setNode = Symbol("setNode"),
-      update = Symbol("update"),
-      remove = Symbol("remove");
+      isEventListenerOrEventListenerObject = (prop: unknown): prop is EventListenerOrEventListenerObject => prop instanceof Function || isEventListenerObject(prop),
+      isClassObj = (prop: unknown): prop is ClassObj => prop instanceof Object && !isAttr(prop),
+      isStyleObj = (prop: unknown): prop is StyleObj => prop instanceof CSSStyleDeclaration || (prop instanceof Object && !isAttr(prop)),
+      isNodeAttributes = (n: EventTarget): n is NodeAttributes => !!(n as NodeAttributes).style && !!(n as NodeAttributes).classList && !!(n as NodeAttributes).removeAttribute && !!(n as NodeAttributes).setAttributeNode && !!(n as NodeAttributes).toggleAttribute && !!(n as NodeAttributes).setAttributeNS,
+      isAttr = (prop: unknown): prop is BoundAttr => prop instanceof Object && attr in prop,
+      isChild = (children: unknown): children is BoundChild => children instanceof Object && child in children,
+      toggleSym = Symbol("toggle"),
+      wrapElem = <T extends Element>(name: string, fn: () => T) => Object.defineProperties((props?: Props | Children, children?: Children) => amendNode(fn(), props, children), {"name": {"value": name}, [child]: {"get": fn}}) as DOMBind<T>,
+      maxElems = 32768;
 
-abstract class Binder {
-	#set = new Set<WeakRef<TextContent | Binder>>();
-	[setNode]<T extends TextContent | Binder>(n: T) {
-		this.#set.add(new WeakRef(n));
-		return n;
-	}
-	[update]() {
-		const text = this+"";
-		for (const wr of this.#set) {
-			const ref = wr.deref();
-			if (ref) {
-				if (ref instanceof Binder) {
-					ref[update]();
-				} else {
-					ref.textContent = text;
-				}
-			} else {
-				this.#set.delete(wr);
-			}
-		}
-	}
-	[remove](b: Binder) {
-		for (const wr of this.#set) {
-			const ref = wr.deref();
-			if (!ref || ref === b) {
-				this.#set.delete(wr);
-			}
-		}
-	}
-	abstract toString(): string;
-}
+export const
+/** This symbol is used to denote a special Object that provides its own Children. */
+child = Symbol.for("dom-child"),
+/** This symbol is used to denote a method on an object that will take an attribute name and return a new Attr Node. */
+attr = Symbol.for("dom-attr"),
+/**
+ * This function determines whether the passed in object can be used as a {@link Children} type.
+ *
+ * @param {Props | Children} propertiesOrChildren The value to be checked for 'Children'-ness.
+ *
+ * @return {boolean} True is the passed value can be assigned to a Children type.
+ */
+isChildren = (propertiesOrChildren: Props | Children): propertiesOrChildren is Children => propertiesOrChildren instanceof Array || typeof propertiesOrChildren === "string" || propertiesOrChildren instanceof Element || propertiesOrChildren instanceof DocumentFragment || propertiesOrChildren instanceof Text || isChild(propertiesOrChildren) || propertiesOrChildren instanceof NodeList || propertiesOrChildren instanceof HTMLCollection,
+/**
+ * This function is used to set attributes and children on {@link https://developer.mozilla.org/en-US/docs/Web/API/Node | Node}s, and events on {@link https://developer.mozilla.org/en-US/docs/Web/API/Node | Node}s and other {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget | EventTarget}s.
+ *
+ * If the element passed is a {@link https://developer.mozilla.org/en-US/docs/Web/API/HTMLElement | HTMLElement} or {@link https://developer.mozilla.org/en-US/docs/Web/API/SVGElement | SVGElement}, then a properties param is processed, applying attributes as per the {@link PropsObject} type. Likewise, any events are set or unset on a passed {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget | EventTarget}, as per the {@link PropsObject} type.
+ *
+ * For any Node, the children are set according to the {@link Children} value.
+ *
+ * This function returns the element passed to it.
+ *
+ * NB: Due to how this function uses instanceof to determine what can be applied to it, it will fail in unexpected ways with types created from proxies of the DOM classes, such as those used with {@link https://developer.mozilla.org/en-US/docs/Web/API/Window/open | window.open}.
+ *
+ * @typeParam {EventTarget | BoundChild | null} T
+ * @param {T}                [element]    The EventTarget or Node to be modified.
+ * @param {Props | Children} [properties] The properties to be added to the EventTarget or Node. Can be omitted with Children in its place.
+ * @param {Children}         [children]   Children to be added to a Node. Should be omitted if `properties` was set to a Children type.
+ *
+ * @return {T} The passed EventTarget, Node, or BoundChild.
+ */
+amendNode: mElement = (element?: EventTarget | BoundChild | null, properties?: Props | Children, children?: Children) => {
+	const node = isChild(element) ? element[child] : element;
 
-class TemplateBind extends Binder {
-	#strings: TemplateStringsArray;
-	#bindings: (Bind | ToString)[];
-	constructor(strings: TemplateStringsArray, ...bindings: (Bind | ToString)[]) {
-		super();
-		this.#strings = strings;
-		this.#bindings = bindings;
-		for (const b of bindings) {
-			if (b instanceof Binder) {
-				b[setNode](this);
-			}
-		}
-	}
-	toString() {
-		let str = "";
-		for (let i = 0; i < this.#strings.length; i++) {
-			str += this.#strings[i] + (this.#bindings[i] ?? "");
-		}
-		return str;
-	}
-}
-
-export class Bind<T extends ToString = ToString> extends Binder {
-	#value: T;
-	constructor(v: T) {
-		super();
-		this.#value = v;
-		if (v instanceof Binder) {
-			v[setNode](this);
-		}
-	}
-	get value() { return this.#value instanceof Bind ? this.#value.value : this.#value; }
-	set value(v: T) {
-		if (this.#value !== v) {
-			if (this.#value instanceof Binder) {
-				this.#value[remove](this);
-			}
-			this.#value = v;
-			if (v instanceof Binder) {
-				v[setNode](this);
-			}
-		}
-		this[update]();
-	}
-	handleEvent(e: Event) {
-		const v = this.value;
-		if (v instanceof Function) {
-			v.call(e.currentTarget, e);
-		} else if (isEventListenerObject(v)) {
-			v.handleEvent(e);
-		}
-	}
-	toString() {
-		return this.value.toString();
-	}
-}
-
-export const amendNode: mElement = (node?: EventTarget | null, properties?: Props | Children, children?: Children) => {
 	if (properties && isChildren(properties)) {
 		children = properties;
 	} else if (properties instanceof NamedNodeMap && node instanceof Element) {
@@ -177,27 +147,47 @@ export const amendNode: mElement = (node?: EventTarget | null, properties?: Prop
 		}
 	} else if (node && typeof properties === "object") {
 		const isNode = isNodeAttributes(node);
+
 		for (const k in properties) {
 			const prop = properties[k as keyof Props];
+
 			if (isEventObject(prop) && k.startsWith("on")) {
 				const arr = prop instanceof Array;
+
 				node[arr && prop[2] ? "removeEventListener" : "addEventListener"](k.slice(2), arr ? prop[0] : prop, arr ? prop[1] : false);
 			} else if (isNode) {
 				if (typeof prop === "boolean") {
+					if (k === "checked" && "checked" in node) {
+						node.checked = prop;
+					}
+
 					node.toggleAttribute(k, prop);
+				} else if (prop === toggle) {
+					if (k === "checked" && "checked" in node) {
+						node.checked = !node.checked;
+					}
+
+					node.toggleAttribute(k);
+				} else if (prop instanceof Function && toggleSym in prop) {
+					prop(node.toggleAttribute(k));
 				} else if (prop === undefined) {
 					node.removeAttribute(k);
 				} else if (prop instanceof Array || prop instanceof DOMTokenList) {
-					if (k === "class" && prop.length) {
-						for (let c of prop) {
+					if ((k === "class" || k === "part") && prop.length) {
+						const attr = k === "class" ? "classList" : "part";
+
+						for (const c of prop) {
 							const f = c.slice(0, 1),
 							      m = f !== '!' && (f !== '~' || undefined);
-							node.classList.toggle(m ? c : c.slice(1), m);
+
+							node[attr].toggle(m ? c : c.slice(1), m);
 						}
 					}
-				} else if (k === "class" && isClassObj(prop)) {
+				} else if ((k === "class" || k === "part") && isClassObj(prop)) {
+					const attr = k === "class" ? "classList" : "part";
+
 					for (const k in prop) {
-						node.classList.toggle(k, prop[k] ?? undefined);
+						node[attr].toggle(k, prop[k] ?? undefined);
 					}
 				} else if (k === "style" && isStyleObj(prop)) {
 					for (const [k, p] of prop instanceof CSSStyleDeclaration ? Array.from(prop, k => [k, prop.getPropertyValue(k)]) : Object.entries(prop)) {
@@ -207,14 +197,16 @@ export const amendNode: mElement = (node?: EventTarget | null, properties?: Prop
 							node.style.setProperty(k, p.toString());
 						}
 					}
-				} else {
-					node.setAttribute(k, prop as string);
-					if (prop instanceof Binder) {
-						const p = node.getAttributeNode(k);
-						if (p) {
-							prop[setNode](p);
-						}
+				} else if (prop instanceof Attr) {
+					node.setAttributeNode(prop);
+				} else if (isAttr(prop)) {
+					prop[attr](node, k);
+				} else if (prop !== null) {
+					if (k === "value" && "value" in node && typeof prop === "string") {
+						node.value = prop;
 					}
+
+					node.setAttributeNS(null, k, prop as string);
 				}
 			}
 		}
@@ -225,62 +217,162 @@ export const amendNode: mElement = (node?: EventTarget | null, properties?: Prop
 		} else if (children) {
 			if (children instanceof Node) {
 				node.appendChild(children);
-			} else if (node instanceof Element || node instanceof DocumentFragment) {
-				node.append(...childrenArr(children));
 			} else {
-				node.appendChild(createDocumentFragment(children));
+				const c = childrenArr(children),
+				      canAppend = (node instanceof Element || node instanceof DocumentFragment);
+
+				if (c.length < maxElems && canAppend) {
+					node.append.apply(node, c);
+				} else {
+					const df = canAppend ? node : new DocumentFragment();
+
+					for (let i = 0; i < c.length; i += maxElems) {
+						df.append.apply(df, c.slice(i, i + maxElems));
+					}
+
+					if (!canAppend) {
+						node.appendChild(df);
+					}
+				}
 			}
 		}
 	}
-	return node;
+	return element;
 },
-bindElement = <T extends Element>(ns: string, value: string) => Object.defineProperty((props?: Props | Children, children?: Children) => amendNode(document.createElementNS(ns, value) as T, props, children), "name", {value}),
+/**
+ * This function takes an XML namespace and returns a special object for which the keys are DOMBinds for that key and namespace.
+ *
+ * @param {string} ns XML Namespace to which the names will be bound.
+ *
+ * @return {Record<string, Element>} An object which contains correctly typed DOMBinds.
+ */
+tags = <NS extends string>(ns: NS) => new Proxy({}, {"get": (_, element: string) => wrapElem(element, () => document.createElementNS(ns, element))}) as NS extends "http://www.w3.org/1999/xhtml" ? {[K in keyof HTMLElementTagNameMap]: DOMBind<HTMLElementTagNameMap[K]>} : NS extends "http://www.w3.org/2000/svg" ? {[K in keyof SVGElementTagNameMap]: DOMBind<SVGElementTagNameMap[K]>} : NS extends "http://www.w3.org/1998/Math/MathML" ? {[K in keyof MathMLElementTagNameMap]: DOMBind<MathMLElementTagNameMap[K]>} : Record<string, DOMBind<Element>>,
+/**
+ * This function registers the custom element and then returns a DOMBind for the element.
+ *
+ * @typeParam {HTMLElement} T
+ *
+ * @param {string}                   name        Name of the custom element.
+ * @param {CustomElementConstructor} constructor Constructor of the Custom Element
+ * @param {ElementDefinitionOptions} [options]   Options to pass to customElements.define.
+ *
+ * @return {(props? Props | Children, children?: Children) => DOMBind<T>} Function used to create a `T` element with the specified properties and/or children.
+ * */
+bindCustomElement = <T extends HTMLElement>(name: string, constructor: {new (...params: any[]): T}, options?: ElementDefinitionOptions | undefined) => {
+	customElements.define(name, constructor, options);
+
+	return wrapElem(options?.extends ?? name, () => new constructor());
+},
+/**
+ * This function is a typeguard for objects that satisfies the EventListenObject interface.
+ */
+isEventListenerObject = (prop: unknown): prop is EventListenerObject => prop instanceof Object && (prop as EventListenerObject).handleEvent instanceof Function,
+/**
+ * This function is a typeguard for objects that are either {@link EventArray}s, Event Functions, or EventListenObjects.
+ */
+isEventObject = (prop: unknown): prop is (EventArray | EventListenerOrEventListenerObject) => isEventListenerOrEventListenerObject(prop) || (prop instanceof Array && prop.length === 3 && isEventListenerOrEventListenerObject(prop[0]) && prop[1] instanceof Object && typeof prop[2] === "boolean"),
+/**
+ * Can be passed to the {@link event} function to set the `once` property on an event.
+ */
 eventOnce = 1,
+/**
+ * Can be passed to the {@link event} function to set the `capture` property on an event.
+ */
 eventCapture = 2,
+/**
+ * Can be passed to the {@link event} function to set the `passive` property on an event.
+ */
 eventPassive = 4,
+/**
+ * Can be passed to the {@link event} function to set the event to be removed.
+ */
 eventRemove = 8,
-event = (fn: Function | Exclude<EventListenerObject, Bind> | Bind<Function | EventListenerObject>, options: number, signal?: AbortSignal): EventArray => [fn as EventListenerOrEventListenerObject, {"once": !!(options&eventOnce), "capture": !!(options&eventCapture), "passive": !!(options&eventPassive), signal}, !!(options&eventRemove)],
+/**
+ * This helper function is used to create {@link EventArray}s.
+ *
+ * @param {Function | Exclude<EventListenerObject, Bound> | Bound<Function | EventListenerObject>} fn An Event Function or a EventListenerObject, or a {@link Bound} version of those.
+ * @param {number} options                                                                            The options param is a bitmask created by ORing together the {@link eventOnce}, {@link eventCapture}, {@link eventPassive}, and {@link eventRemove} constants, as per need.
+ * @param {AbortSignal} [signal]                                                                      The `signal` param can be used to set a {@link https://developer.mozilla.org/en-US/docs/Web/API/AbortSignal | AbortSignal} to the `signal` option of the {@link https://developer.mozilla.org/en-US/docs/Web/API/EventTarget/addEventListener | addEventListener} call. This will be unused in a event removal context.
+ *
+ * @return {EventArray} An array that can be used with {@link amendNode}, {@link clearNode}, or any DOMBind function to add or remove an event, as specified.
+ */
+event = (fn: Function | EventListenerObject, options: number, signal?: AbortSignal): EventArray => [fn as EventListenerOrEventListenerObject, {"once": !!(options&eventOnce), "capture": !!(options&eventCapture), "passive": !!(options&eventPassive), signal}, !!(options&eventRemove)],
+/**
+ * This function creates a {@link https://developer.mozilla.org/en-US/docs/Web/API/DocumentFragment | DocumentFragment} that contains any {@link Children} passed to it, as with {@link amendNode}.
+ *
+ * @param {Children} [children] Children to be added to a new DocumentFragment.
+ *
+ * @return {DocumentFragment} A DocumentFragment with specified children attached.
+ */
 createDocumentFragment = (children?: Children) => {
 	const df = document.createDocumentFragment();
+
 	if (typeof children === "string") {
 		df.textContent = children;
 	} else if (children instanceof Node) {
 		df.append(children);
 	} else if (children !== undefined) {
-		df.append(...childrenArr(children));
+		const c = childrenArr(children);
+
+		if (c.length < maxElems) {
+			df.append.apply(df, c);
+		} else {
+			for (let i = 0; i < c.length; i += maxElems) {
+				df.append.apply(df, c.slice(i, i + maxElems));
+			}
+		}
 	}
 	return df;
 },
-clearNode: mElement = (node?: Node, properties?: Props | Children, children?: Children) => {
-	if (!node) {
-		return node;
+/**
+ * This function acts identically to {@link amendNode} except that it clears any children before amending.
+ *
+ * @typeParam {Node} T
+ * @param {Props | Children} [properties] The properties to be added to the EventTarget or Node. Can be omitted with Children in its place.
+ * @param {Children}         [children]   Children to be added to the Node. Should be omitted if `properties` was set to a Children type.
+ *
+ * @return {T} The Node being cleared.
+ */
+clearNode: mElement = (n?: Node | BoundChild, properties?: Props | Children, children?: Children) => {
+	if (!n) {
+		return n;
 	}
+
+	const node = isChild(n) ? n[child] : n;
+
 	if (properties && isChildren(properties)) {
 		properties = void (children = properties);
 	}
+
 	if (typeof children === "string") {
 		children = void (node.textContent = children);
 	} else if (children && node instanceof Element) {
-		children = void node.replaceChildren(...childrenArr(children));
+		const c = childrenArr(children);
+
+		if (c.length < maxElems) {
+			children = void node.replaceChildren.apply(node, c);
+		} else {
+			children = void node.replaceChildren(createDocumentFragment(c));
+		}
 	} else {
-		while (node.lastChild !== null) {
+		while (node.lastChild) {
 			node.lastChild.remove();
 		}
 	}
-	return amendNode(node, properties, children);
+
+	return amendNode(n, properties, children);
 },
-autoFocus = <T extends FocusElement>(node: T, inputSelect = true) => {
-	window.setTimeout(() => {
-		node.focus();
-		if ((node instanceof HTMLInputElement || node instanceof HTMLTextAreaElement) && inputSelect) {
-			node.select();
-		}
-	}, 0);
-	return node;
-},
-bind = (<T extends ToString>(v: T | TemplateStringsArray, first?: Bind | ToString, ...bindings: (Bind | ToString)[]) => {
-	if (v instanceof Array && first) {
-		return new TemplateBind(v, first, ...bindings);
-	}
-	return new Bind<T>(v as T);
-}) as BindFn;
+/**
+ * This function can be used directly in the params object of a amendNode call to toggle an attribute on or off (depending on it's previous state); e.g.
+ *
+ * amendNode(myNode, {"attr": toggle});
+ *
+ * If a callback is provided, then it will be called with the eventual state of the toggle; e.g.
+ *
+ * amendNode(myNode, {"attr": toggle(state => myState = state)});
+ *
+ * @param {(v: boolean) => void} fn The callback function to receive the state.
+ *
+ * @return {(v: boolean) => void} Wrapped callback function that will be recognised by amendNode.
+ */
+toggle = (fn: (v: boolean) => void) => Object.assign((v: boolean) => fn(v), {[toggleSym]: null});
